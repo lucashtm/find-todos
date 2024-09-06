@@ -1,0 +1,22 @@
+#!/bin/bash
+
+while getopts m:n: flag
+do
+    case "${flag}" in
+        m) base_branch=${OPTARG};;
+        n) author_name=${OPTARG};;
+    esac
+done
+
+if  [ -z "$base_branch" ]; then
+  base_branch=master
+fi
+if  [ -z "$author_name" ]; then
+  author_name=$(git config user.name)
+fi
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+printf "TODOs for $author_name on $current_branch branch\n---------------------------------------\n"
+files=$(git diff --name-only $current_branch $(git merge-base $current_branch $base_branch))
+for file in $files; do
+  git blame -f -n $file | grep "$author_name.*# TODO";
+done  | sed -n -e "s/[^ ]* *\([^ ]*\) *\([1-9]*\).*TODO: \(.*\)/\3;\1:\2/p" | awk -F ';' '{print ""$1" \033[90m"$2"\033[0m"}'
