@@ -1,10 +1,11 @@
 #!/bin/bash
 
-while getopts m:n: flag
+while getopts m:n:d: flag
 do
   case "${flag}" in
     m) base_branch=${OPTARG};;
     n) author_name=${OPTARG};;
+    d) comment_delimiter=${OPTARG};;
   esac
 done
 
@@ -14,9 +15,16 @@ fi
 if  [ -z "$author_name" ]; then
   author_name=$(git config user.name)
 fi
+if  [ -z "$comment_delimiter" ]; then
+  comment_delimiter="#"
+fi
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 printf "TODOs for $author_name on $current_branch branch\n---------------------------------------\n"
-files=$(git diff --name-only $current_branch $(git merge-base $current_branch $base_branch))
+if [ "$current_branch" == "$base_branch" ]; then
+  files=$(git ls-files)
+else
+  files=$(git diff --name-only $current_branch $(git merge-base $current_branch $base_branch))
+fi
 for file in $files; do
-  git blame -f -n $file | grep "$author_name.*# TODO";
+  git blame -f -n $file | grep "$author_name.*$comment_delimiter TODO";
 done  | sed -n -e "s/[^ ]* *\([^ ]*\) *\([1-9]*\).*TODO: \(.*\)/\3;\1:\2/p" | awk -F ';' '{print ""$1" \033[90m"$2"\033[0m"}'
