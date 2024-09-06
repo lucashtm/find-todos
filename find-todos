@@ -2,10 +2,10 @@
 
 while getopts m:n: flag
 do
-    case "${flag}" in
-        m) base_branch=${OPTARG};;
-        n) author_name=${OPTARG};;
-    esac
+  case "${flag}" in
+    m) base_branch=${OPTARG};;
+    n) author_name=${OPTARG};;
+  esac
 done
 
 if  [ -z "$base_branch" ]; then
